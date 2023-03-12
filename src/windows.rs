@@ -17,22 +17,26 @@
 // <https://www.mozilla.org/en-US/MPL/2.0/>.
 
 //! Get UI and theme information for Windows.
+//!
+//! Uses the `GetTheme*` functions to query for theme information.
 
 use std::io;
-use std::sync::Once;
 use std::sync::atomic::{AtomicIsize, Ordering};
+use std::sync::Once;
 
 use windows_sys::w;
 
-use windows_sys::Win32::Foundation::{HWND, HINSTANCE};
+use windows_sys::Win32::Foundation::{HINSTANCE, HWND};
 
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 
 use windows_sys::Win32::UI::WindowsAndMessaging::WNDCLASSEXW;
-use windows_sys::Win32::UI::WindowsAndMessaging::{CreateWindowExW, CloseWindow, DefWindowProcW, RegisterClassExW};
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    CloseWindow, CreateWindowExW, DefWindowProcW, RegisterClassExW,
+};
 
 use windows_sys::Win32::UI::Controls::HTHEME;
-use windows_sys::Win32::UI::Controls::{OpenThemeData, CloseThemeData};
+use windows_sys::Win32::UI::Controls::{CloseThemeData, OpenThemeData};
 
 /// A theme handle.
 struct Theme(HTHEME);
@@ -46,7 +50,7 @@ impl Drop for Theme {
 }
 
 /// A handle to a window.
-/// 
+///
 /// Windows are needed to retrieve theme data.
 struct Window(HWND);
 
@@ -61,8 +65,6 @@ impl Drop for Window {
 impl Theme {
     /// Get a new theme from its class name.
     fn new(window: &Window, name: &str) -> io::Result<Self> {
-
-
         todo!()
     }
 }
@@ -83,9 +85,7 @@ impl Window {
                 ..unsafe { std::mem::zeroed() }
             };
 
-            let result = unsafe {
-                RegisterClassExW(&class)
-            };
+            let result = unsafe { RegisterClassExW(&class) };
 
             if result == 0 {
                 panic!("Failed to register dummy window class");
@@ -107,16 +107,16 @@ fn instance() -> io::Result<HINSTANCE> {
     }
 
     // Load the current instance handle.
-    let handle = unsafe {
-        GetModuleHandleW(std::ptr::null())
-    };
+    let handle = unsafe { GetModuleHandleW(std::ptr::null()) };
 
     if handle == 0 {
         return Err(io::Error::last_os_error());
     }
 
     // Install it in our cached variable.
-    let instance = INSTANCE.compare_exchange(instance, handle, Ordering::SeqCst, Ordering::SeqCst).unwrap_or_else(|x| x);
+    let instance = INSTANCE
+        .compare_exchange(instance, handle, Ordering::SeqCst, Ordering::SeqCst)
+        .unwrap_or_else(|x| x);
 
     Ok(instance)
 }
