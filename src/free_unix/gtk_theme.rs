@@ -96,10 +96,10 @@ fn load_from_dir(
     }
 
     // Create a directory from the name and dir.
-    let mut theme_dir = dir.join(name);
+    let theme_dir = dir.join(name);
 
     // List the directories in this directory.
-    let mut list_dir = leap!(fs::read_dir(theme_dir));
+    let list_dir = leap!(fs::read_dir(theme_dir));
 
     for dir in list_dir {
         let dir = leap!(dir);
@@ -112,7 +112,7 @@ fn load_from_dir(
 
                 if let Ok(file) = fs::File::open(&variant_path) {
                     let file = io::BufReader::new(file);
-                    return Ok(Some(load_file_file(name, file)?));
+                    return Ok(Some(load_css(name, shade, file)?));
                 }
             }
         }
@@ -121,8 +121,8 @@ fn load_from_dir(
     Ok(None)
 }
 
-fn load_file_file<IO: io::BufRead>(name: &str, mut file: IO) -> Result<Theme, LoadThemeError> {
-    let mut theme = Theme::empty(name);
+fn load_css<IO: io::BufRead>(name: &str, shade: ShadePreference, mut file: IO) -> Result<Theme, LoadThemeError> {
+    let mut theme = Theme::default_theme(shade);
 
     // Read in the file and parse the CSS.
     let mut css = String::new();

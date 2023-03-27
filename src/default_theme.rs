@@ -18,7 +18,9 @@
 
 //! A default theme similar to Adwaita.
 
-use crate::{Color, LoadThemeError, ShadePreference, Theme, WIDGETS, WIDGET_STATES, TextStyle, FontFamily};
+use crate::{
+    Color, FontFamily, LoadThemeError, ShadePreference, TextStyle, Theme, WIDGETS, WIDGET_STATES,
+};
 
 use alloc::format;
 
