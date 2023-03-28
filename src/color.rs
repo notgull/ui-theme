@@ -44,6 +44,50 @@ impl Color {
         )
     }
 
+    /// Darken a color by a factor.
+    pub(crate) const fn darken(self, percent: u8) -> Self {
+        macro_rules! t {
+            ($e:expr) => {{
+                (($e as u16 * percent as u16) / 100) as u8
+            }};
+        }
+
+        let [r, g, b, a] = self.0;
+        Self::new(t!(r), t!(g), t!(b), a)
+    }
+
+    /// Lighten a color by a factor.
+    pub(crate) const fn lighten(self, percent: u8) -> Self {
+        macro_rules! t {
+            ($e:expr) => {{
+                let e = $e as u16;
+                let p = percent as u16;
+                let result = e + ((255 - e) * p) / 100;
+                result as u8
+            }};
+        }
+
+        let [r, g, b, a] = self.0;
+        Self::new(t!(r), t!(g), t!(b), a)
+    }
+
+    /// Mix two colors by a factor.
+    pub(crate) const fn mix(self, other: Self, percent: u8) -> Self {
+        macro_rules! t {
+            ($e:expr, $o:expr) => {{
+                let e = $e as u16;
+                let o = $o as u16;
+                let p = percent as u16;
+                let result = e + ((o - e) * p) / 100;
+                result as u8
+            }};
+        }
+
+        let [r, g, b, a] = self.0;
+        let [or, og, ob, oa] = other.0;
+        Self::new(t!(r, or), t!(g, og), t!(b, ob), t!(a, oa))
+    }
+
     /// Convert into a 4-tuple.
     pub fn into_tuple(self) -> (u8, u8, u8, u8) {
         let [r, g, b, a] = self.0;

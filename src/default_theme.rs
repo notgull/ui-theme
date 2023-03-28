@@ -24,43 +24,88 @@ use crate::{
 
 use alloc::format;
 
-const FG_LIGHT_COLOR: Color = Color::hex("#2e3436");
-const BG_LIGHT_COLOR: Color = Color::hex("#f6f5f4");
-const FG_DARK_COLOR: Color = Color::hex("#eeeeec");
-const BG_DARK_COLOR: Color = Color::hex("#3d3846");
-
 macro_rules! choose {
-    ($shade:expr,$light:expr,$dark:expr) => {{
-        match $shade {
-            ShadePreference::Light => $light,
-            ShadePreference::Dark => $dark,
+    ($T:ident,$light:expr,$dark:expr) => {{
+        if $T::IS_LIGHT {
+            $light
+        } else {
+            $dark
         }
     }};
 }
 
+const BLACK: Color = Color::new(0, 0, 0, 255);
+const WHITE: Color = Color::new(255, 255, 255, 255);
+
+trait ThemeType {
+    const IS_LIGHT: bool;
+
+    const TEXT_COLOR: Color = choose!(Self, BLACK, WHITE);
+    const BASE_COLOR: Color = choose!(Self, WHITE, BLACK);
+    const BG_COLOR: Color = choose!(Self, Color::hex("#f6f5f4"), Color::hex("#3d3846"));
+    const FG_COLOR: Color = choose!(Self, Color::hex("#2e3436"), Color::hex("#eeeeec"));
+
+    const SELECTED_FG_COLOR: Color = WHITE;
+    const SELECTED_BG_COLOR: Color = choose!(
+        Self,
+        Color::hex("#3584e4"),
+        Color::hex("#3584e3").darken(20)
+    );
+    const SELECTED_BORDERS_COLOR: Color = choose!(
+        Self,
+        Self::SELECTED_BG_COLOR.darken(15),
+        Self::SELECTED_BG_COLOR.darken(30)
+    );
+
+    const BORDERS_COLOR: Color = choose!(
+        Self,
+        Self::BG_COLOR.darken(18),
+        Self::BG_COLOR.darken(10)
+    );
+    const ALT_BORDERS_COLOR: Color = choose!(
+        Self,
+        Self::BG_COLOR.darken(24),
+        Self::BG_COLOR.darken(18)
+    );
+    const LINK_COLOR: Color = choose!(
+        Self,
+        Self::SELECTED_BG_COLOR.darken(10),
+        Self::SELECTED_BG_COLOR.darken(20)
+    );
+    const SELECTED_LINK_COLOR: Color = choose!(
+        Self,
+        Self::SELECTED_BG_COLOR.darken(20),
+        Self::SELECTED_BG_COLOR.darken(10)
+    );
+
+    const SCROLLBAR_BG_COLOR: Color = choose!(
+        Self,
+        Self::BG_COLOR.mix(Self::FG_COLOR, 80),
+        Self::BASE_COLOR.mix(Self::BG_COLOR, 50)
+    );
+    const SCROLLBAR_SLIDER_COLOR: Color = Self::FG_COLOR.mix(Self::BG_COLOR, 60);
+}
+
+struct Light;
+impl ThemeType for Light {
+    const IS_LIGHT: bool = true;
+}
+
+struct Dark;
+impl ThemeType for Dark {
+    const IS_LIGHT: bool = false;
+}
+
+fn default_theme_inner<T: ThemeType>(theme: &mut Theme) {
+
+}
+
 pub(crate) fn default_theme(shade: ShadePreference) -> Theme {
     let mut theme = Theme::empty(format!("Default_{:?}", shade));
-
-    let fg_color = choose!(shade, FG_LIGHT_COLOR, FG_DARK_COLOR);
-    let bg_color = choose!(shade, BG_LIGHT_COLOR, BG_DARK_COLOR);
-
-    for widget in WIDGETS {
-        for state in WIDGET_STATES {
-            // Get the widget state.
-            let props = theme.get_mut(*widget, *state);
-
-            // Set the background color.
-            props.set_background(bg_color);
-
-            // Set the default text style.
-            props.set_text_style({
-                let mut style = TextStyle::new(24.0, FontFamily::SansSerif);
-                style.set_color(fg_color);
-                style
-            });
-        }
+    match shade {
+        ShadePreference::Light => default_theme_inner::<Light>(&mut theme),
+        ShadePreference::Dark => default_theme_inner::<Dark>(&mut theme),
     }
-
     theme
 }
 

@@ -121,7 +121,11 @@ fn load_from_dir(
     Ok(None)
 }
 
-fn load_css<IO: io::BufRead>(name: &str, shade: ShadePreference, mut file: IO) -> Result<Theme, LoadThemeError> {
+fn load_css<IO: io::BufRead>(
+    name: &str,
+    shade: ShadePreference,
+    mut file: IO,
+) -> Result<Theme, LoadThemeError> {
     let mut theme = Theme::default_theme(shade);
 
     // Read in the file and parse the CSS.
