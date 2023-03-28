@@ -19,7 +19,8 @@
 //! A default theme similar to Adwaita.
 
 use crate::{
-    Color, FontFamily, LoadThemeError, ShadePreference, TextStyle, Theme, WIDGETS, WIDGET_STATES,
+    Border, Color, FontFamily, LoadThemeError, Margin, ShadePreference, TextAlignment, TextStyle,
+    Theme, Widget, WidgetState, WIDGETS, WIDGET_STATES,
 };
 
 use alloc::format;
@@ -57,16 +58,10 @@ trait ThemeType {
         Self::SELECTED_BG_COLOR.darken(30)
     );
 
-    const BORDERS_COLOR: Color = choose!(
-        Self,
-        Self::BG_COLOR.darken(18),
-        Self::BG_COLOR.darken(10)
-    );
-    const ALT_BORDERS_COLOR: Color = choose!(
-        Self,
-        Self::BG_COLOR.darken(24),
-        Self::BG_COLOR.darken(18)
-    );
+    const BORDERS_COLOR: Color =
+        choose!(Self, Self::BG_COLOR.darken(18), Self::BG_COLOR.darken(10));
+    const ALT_BORDERS_COLOR: Color =
+        choose!(Self, Self::BG_COLOR.darken(24), Self::BG_COLOR.darken(18));
     const LINK_COLOR: Color = choose!(
         Self,
         Self::SELECTED_BG_COLOR.darken(10),
@@ -84,6 +79,10 @@ trait ThemeType {
         Self::BASE_COLOR.mix(Self::BG_COLOR, 50)
     );
     const SCROLLBAR_SLIDER_COLOR: Color = Self::FG_COLOR.mix(Self::BG_COLOR, 60);
+
+    const DISABLED_FG_COLOR: Color = Self::FG_COLOR.mix(Self::BG_COLOR, 50);
+    const DISABLED_BG_COLOR: Color = Self::BG_COLOR.mix(Self::BASE_COLOR, 60);
+    const DISABLED_BORDERS_COLOR: Color = Self::BORDERS_COLOR.mix(Self::BG_COLOR, 80);
 }
 
 struct Light;
@@ -96,8 +95,65 @@ impl ThemeType for Dark {
     const IS_LIGHT: bool = false;
 }
 
+#[inline]
 fn default_theme_inner<T: ThemeType>(theme: &mut Theme) {
+    for widget in WIDGETS {
+        for state in WIDGET_STATES {
+            let props = theme.get_mut(*widget, *state);
 
+            // Set the background color.
+            let bg_color = match *state {
+                WidgetState::Disabled => T::DISABLED_BG_COLOR,
+                _ => T::BG_COLOR,
+            };
+
+            props.set_background(bg_color);
+
+            // Set the foreground text color.
+            let fg_color = match *state {
+                WidgetState::Disabled => T::DISABLED_FG_COLOR,
+                _ => T::FG_COLOR,
+            };
+
+            let mut text_style = TextStyle::new(12.0, FontFamily::SansSerif);
+            text_style
+                .set_color(fg_color)
+                .set_halignment(TextAlignment::Center)
+                .set_valignment(TextAlignment::Center);
+            props.set_text_style(text_style);
+
+            // Figure out if we need to set a border.
+            let border_color = match *state {
+                WidgetState::Disabled => T::DISABLED_BORDERS_COLOR,
+                WidgetState::Selected => T::SELECTED_BORDERS_COLOR,
+                _ => T::BORDERS_COLOR,
+            };
+            let border_data = match *widget {
+                Widget::Button => Some((1.0, border_color)),
+                _ => None,
+            };
+
+            if let Some((radius, color)) = border_data {
+                let mut border = Border::new(2.0, color);
+                border.set_radius(radius);
+                props.set_border(border);
+            }
+
+            let margin = Margin::new(2.0, 2.0, 2.0, 2.0);
+            props.set_margin(margin).set_padding(margin);
+
+            // Set default sizes.
+            let height = if border_data.is_some() { 24 } else { 20 };
+
+            props.set_default_size((height, height));
+
+            let bar_size_long = 16;
+            let bar_size_short = 8;
+
+            props.set_menu_bar_size((bar_size_long, bar_size_short));
+            props.set_scroll_bar_size((bar_size_short, bar_size_long));
+        }
+    }
 }
 
 pub(crate) fn default_theme(shade: ShadePreference) -> Theme {

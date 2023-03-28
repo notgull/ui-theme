@@ -83,7 +83,7 @@ pub(super) fn load_theme_blocking(
     name: Option<&str>,
     shade: ShadePreference,
 ) -> Result<Theme, LoadThemeError> {
-    // TODO: Only use block_on wher enecessary
+    // TODO: Only use block_on where enecessary
     future::block_on(load_theme(name, shade))
 }
 
@@ -191,24 +191,6 @@ async fn dconf_string(key: &str) -> io::Result<String> {
     })?;
 
     stdout.retain(|c| " '".contains(c));
-
-    Ok(stdout)
-}
-
-/// Get a string value from a key from `dconf` using the blocking API.
-fn dconf_string_blocking(key: &str) -> io::Result<String> {
-    let mut stdout = String::from_utf8(
-        std::process::Command::new("dconf")
-            .args(["read", key])
-            .output()?
-            .stdout,
-    )
-    .map_err(|e| {
-        io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!("Failed to convert dconf output to string: {}", e),
-        )
-    })?;
 
     Ok(stdout)
 }
