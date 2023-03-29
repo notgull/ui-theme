@@ -83,6 +83,22 @@ trait ThemeType {
     const DISABLED_FG_COLOR: Color = Self::FG_COLOR.mix(Self::BG_COLOR, 50);
     const DISABLED_BG_COLOR: Color = Self::BG_COLOR.mix(Self::BASE_COLOR, 60);
     const DISABLED_BORDERS_COLOR: Color = Self::BORDERS_COLOR.mix(Self::BG_COLOR, 80);
+
+    const PRESSED_BG_COLOR: Color = choose!(
+        Self,
+        Self::SELECTED_BG_COLOR.darken(10),
+        Self::SELECTED_BG_COLOR.darken(20)
+    );
+    const PRESSED_BORDERS_COLOR: Color = choose!(
+        Self,
+        Self::SELECTED_BORDERS_COLOR.darken(20),
+        Self::SELECTED_BORDERS_COLOR.darken(10)
+    );
+    const PRESSED_FG_COLOR: Color = choose!(
+        Self,
+        Self::SELECTED_FG_COLOR.darken(30),
+        Self::SELECTED_FG_COLOR.darken(20)
+    );
 }
 
 struct Light;
@@ -104,6 +120,8 @@ fn default_theme_inner<T: ThemeType>(theme: &mut Theme) {
             // Set the background color.
             let bg_color = match *state {
                 WidgetState::Disabled => T::DISABLED_BG_COLOR,
+                WidgetState::Selected => T::SELECTED_BG_COLOR,
+                WidgetState::Pressed => T::PRESSED_BG_COLOR,
                 _ => T::BG_COLOR,
             };
 
@@ -112,6 +130,8 @@ fn default_theme_inner<T: ThemeType>(theme: &mut Theme) {
             // Set the foreground text color.
             let fg_color = match *state {
                 WidgetState::Disabled => T::DISABLED_FG_COLOR,
+                WidgetState::Selected => T::SELECTED_FG_COLOR,
+                WidgetState::Pressed => T::PRESSED_FG_COLOR,
                 _ => T::FG_COLOR,
             };
 
@@ -173,6 +193,7 @@ pub(super) fn load_theme_blocking(
     Ok(default_theme(shade))
 }
 
+#[allow(unused)]
 pub(super) async fn load_theme(
     _name: Option<&str>,
     shade: ShadePreference,
